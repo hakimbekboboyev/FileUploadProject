@@ -79,6 +79,22 @@ public class FileStorageService {
         return fileStorageRepository.save(fileStorage);
     }
 
+
+    public String delete(String hashId){
+        FileStorage fileStorage = fileStorageRepository.findFileStorageByHashId(hashId);
+        if (fileStorage!=null) {
+            File file = new File(String.format("%s/%s", serverFolderPath, fileStorage.getUploadFolder()));
+            if (file.delete()) {
+                fileStorageRepository.delete(fileStorage);
+                return "Good";
+            }
+        }
+        return "Not Found";
+
+
+
+    }
+
     public FileStorage findByHashId(String hashId){
 
         return fileStorageRepository.findFileStorageByHashId(hashId);

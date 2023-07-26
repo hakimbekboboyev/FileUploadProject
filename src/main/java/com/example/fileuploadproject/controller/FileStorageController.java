@@ -5,6 +5,7 @@ import com.example.fileuploadproject.service.FileStorageService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileUrlResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,20 +34,37 @@ public class FileStorageController {
     @GetMapping("/file-preview/{hashId}")
     public ResponseEntity preview(@PathVariable String hashId) throws MalformedURLException {
         FileStorage fileStorage = fileStorageService.findByHashId(hashId);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION,"inline; fileName=\"", UriEncoder.encode(fileStorage.getName()))
-                .contentType(MediaType.parseMediaType(fileStorage.getContentType()))
-                .contentLength(fileStorage.getFileSize())
-                .body(new FileUrlResource(String.format("%s/%s",this.serverFolderPath,fileStorage.getUploadFolder())));
+        if (fileStorage != null) {
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; fileName=\"", UriEncoder.encode(fileStorage.getName()))
+                    .contentType(MediaType.parseMediaType(fileStorage.getContentType()))
+                    .contentLength(fileStorage.getFileSize())
+                    .body(new FileUrlResource(String.format("%s/%s", this.serverFolderPath, fileStorage.getUploadFolder())));
+        }
+        return ResponseEntity.badRequest().body("File Not Found!");
     }
 
     @GetMapping("/download/{hashId}")
     public ResponseEntity download(@PathVariable String hashId) throws MalformedURLException {
         FileStorage fileStorage = fileStorageService.findByHashId(hashId);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; fileName=\"", UriEncoder.encode(fileStorage.getName()))
-                .contentType(MediaType.parseMediaType(fileStorage.getContentType()))
-                .contentLength(fileStorage.getFileSize())
-                .body(new FileUrlResource(String.format("%s/%s",this.serverFolderPath,fileStorage.getUploadFolder())));
+        if (fileStorage != null) {
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; fileName=\"", UriEncoder.encode(fileStorage.getName()))
+                    .contentType(MediaType.parseMediaType(fileStorage.getContentType()))
+                    .contentLength(fileStorage.getFileSize())
+                    .body(new FileUrlResource(String.format("%s/%s", this.serverFolderPath, fileStorage.getUploadFolder())));
+        }
+        return ResponseEntity.badRequest().body("File Not Found!");
+
+    }
+
+
+    @DeleteMapping("/delete/{hashId}")
+    public ResponseEntity delete(@PathVariable String hashId) {
+        String delete = fileStorageService.delete(hashId);
+        if (delete == "Good") {
+            return ResponseEntity.ok("File Deleted!");
+        }
+        return ResponseEntity.badRequest().body("File Not Found");
     }
 }
