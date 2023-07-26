@@ -20,7 +20,7 @@ public class FileStorageService {
     private final Hashids hashids;
 
     @Value("${upload.server.folder}")
-    private String ServerFolderPath;
+    private String serverFolderPath;
 
     public FileStorageService(FileStorageRepository fileStorageRepository) {
         this.fileStorageRepository = fileStorageRepository;
@@ -39,19 +39,28 @@ public class FileStorageService {
         Date now = new Date();
 
         String path = String.format("%s/upload_file/%d/%d/%d",
-                this.ServerFolderPath,
+                this.serverFolderPath,
                 now.getYear()+1900,
                 now.getMonth()+1,
                 now.getDate());
 
         File uploadFolder = new File(path);
 
-        if(!uploadFolder.exists() && uploadFolder.mkdir()){
+        if(!uploadFolder.exists() && uploadFolder.mkdirs()){
             System.out.println("Created Folder!");
         }
 
         fileStorage.setHashId(hashids.encode(fileStorage.getId()));
-        fileStorage.setUploadFolder(path+"/"+ fileStorage.getHashId()+"."+fileStorage.getExtension());
+
+        String pathLocal = String.format("/upload_file/%d/%d/%d/%s.%s",
+
+                now.getYear()+1900,
+                now.getMonth()+1,
+                now.getDate(),
+                fileStorage.getHashId(),
+                fileStorage.getExtension());
+
+        fileStorage.setUploadFolder(pathLocal);
         fileStorageRepository.save(fileStorage);
 
         uploadFolder = uploadFolder.getAbsoluteFile();
@@ -67,7 +76,12 @@ public class FileStorageService {
             throw new RuntimeException(e);
         }
 
-        return fileStorage;
+        return fileStorageRepository.save(fileStorage);
+    }
+
+    public FileStorage findByHashId(String hashId){
+
+        return fileStorageRepository.findFileStorageByHashId(hashId);
     }
 
     private String getExt(String originalName){
